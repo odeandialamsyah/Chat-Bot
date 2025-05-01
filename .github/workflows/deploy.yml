@@ -1,0 +1,49 @@
+name: AlwaysData.com Deployment
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  web-deploy:
+    name: 🎉 Deploy
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: 🚚 Get latest code
+      uses: actions/checkout@v4
+
+    - name: 🔧 Setup Go
+      uses: actions/setup-go@v5
+      with:
+        go-version: '1.22.x'
+
+    - name: 🏗️ Build Application
+      run: |
+        go env -w CGO_ENABLED=0
+        go get .
+        go build -o chat-bot
+        chmod +x chat-bot
+
+    - name: 📤 Upload Binary via SCP
+      uses: appleboy/scp-action@v0.1.7
+      with:
+        host: ${{ secrets.sshhost }}
+        username: ${{ secrets.sshusername }}
+        password: ${{ secrets.sshpassword }}
+        port: ${{ secrets.sshport }}
+        source: "chat-bot"
+        target: ${{ secrets.folder }}
+
+    - name: 🔁 Restart Site via API
+      uses: appleboy/ssh-action@v1.0.3
+      with:
+        host: ${{ secrets.sshhost }}
+        username: ${{ secrets.sshusername }}
+        password: ${{ secrets.sshpassword }}
+        port: ${{ secrets.sshport }}
+        script: |
+          ls -l ${{ secrets.folder }}
+          curl https://icanhazip.com/
+          curl -X POST --basic --user "${{ secrets.apikey }}:" https://api.alwaysdata.com/v1/site/${{ secrets.appid }}/restart/
