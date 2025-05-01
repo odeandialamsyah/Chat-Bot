@@ -18,7 +18,7 @@ func ConnectDB() error {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
-	client, err := mongo.Connect(ctx, options.Client().ApplyURI("YOUR_MONGO_CONNECTION_STRING"))
+	client, err := mongo.Connect(ctx, options.Client().ApplyURI("mongodb+srv://whatsappdb:%3Cdb_password%3E@gochat.sy2vtiv.mongodb.net/"))
 	if err != nil {
 		return err
 	}
