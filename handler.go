@@ -32,22 +32,30 @@ func handleKeywords(message string) string {
 
 // Fungsi untuk mengirim balasan menggunakan wa.my.id API
 func sendReply(number, message string) {
-	// Format payload untuk kirim ke wa.my.id API
-	payload := map[string]string{
-		"api_key":   os.Getenv("WAPI_KEY"),
-		"device_id": os.Getenv("DEVICE_ID"),
-		"number":    number,
-		"message":   message,
+	payload := map[string]interface{}{
+		"to":       number,
+		"isgroup":  false,
+		"messages": message,
 	}
 
 	payloadBytes, _ := json.Marshal(payload)
-	resp, err := http.Post("https://wa.my.id/api/send-message", "application/json", bytes.NewBuffer(payloadBytes))
+
+	req, err := http.NewRequest("POST", os.Getenv("WAAPITXTMSG"), bytes.NewBuffer(payloadBytes))
 	if err != nil {
-		log.Printf("Gagal kirim balasan: %v", err)
+		log.Printf("Gagal membuat request: %v", err)
+		return
+	}
+	req.Header.Set("Content-Type", "application/json")
+
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		log.Printf("Gagal mengirim balasan: %v", err)
 		return
 	}
 	defer resp.Body.Close()
-	log.Printf("Balasan terkirim ke %s", number)
+
+	body, _ := io.ReadAll(resp.Body)
+	log.Printf("Respon dari wa.my.id: %s", string(body))
 }
 
 // Fungsi untuk menangani webhook
